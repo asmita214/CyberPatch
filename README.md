@@ -63,7 +63,7 @@ CyberPatch/
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/your-username/CyberPatch.git
+git clone https://github.com/asmita214/CyberPatch.git
 cd CyberPatch
 ```
 
