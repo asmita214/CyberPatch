@@ -5,6 +5,9 @@
 A reinforcement learning system that trains security bots to autonomously protect a computer network from dynamic cyber threats. Two specialized agents learn — through trial and error — which vulnerabilities to patch first, in what order, before threats spread and escalate.
 
 ---
+## 📄 Documentation
+
+[Download Project Report](docs/CyberPatch_Report.docx)
 
 ## 📊 Results
 
