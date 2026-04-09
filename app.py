@@ -25,7 +25,6 @@ html, body, [class*="css"] {
 }
 .stApp { background: #f4f6fb !important; }
 
-/* Sidebar — always visible, no toggle */
 [data-testid="stSidebar"] {
     background: #ffffff !important;
     border-right: 1px solid #e2e8f0 !important;
@@ -35,7 +34,6 @@ html, body, [class*="css"] {
 }
 [data-testid="stSidebar"] * { color: #334155 !important; }
 
-/* Hide ALL sidebar toggle/collapse buttons so it can never be closed */
 [data-testid="stSidebarCollapseButton"],
 [data-testid="collapsedControl"],
 button[kind="header"],
@@ -45,7 +43,6 @@ button[kind="header"],
     visibility: hidden !important;
 }
 
-/* Hide hamburger, footer, decoration — keep header transparent for layout */
 #MainMenu, footer, [data-testid="stDecoration"] {
     visibility: hidden !important;
     display: none !important;
@@ -60,7 +57,6 @@ header[data-testid="stHeader"] {
 }
 [data-testid="stToolbarActions"] { display: none !important; }
 
-/* Metric cards */
 [data-testid="metric-container"] {
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
@@ -93,7 +89,6 @@ header[data-testid="stHeader"] {
 }
 [data-testid="stMetricDelta"] svg { display: none !important; }
 
-/* Tabs */
 .stTabs [data-baseweb="tab-list"] {
     background: #ffffff !important;
     border-bottom: 2px solid #e2e8f0 !important;
@@ -116,7 +111,6 @@ header[data-testid="stHeader"] {
     background: rgba(14,165,233,0.04) !important;
 }
 
-/* Buttons */
 .stButton > button {
     background: #ffffff !important;
     border: 1.5px solid #0ea5e9 !important;
@@ -134,7 +128,6 @@ header[data-testid="stHeader"] {
     color: #ffffff !important;
 }
 
-/* Sliders & selects */
 [data-testid="stSlider"] > div > div > div > div { background: #0ea5e9 !important; }
 [data-testid="stSelectbox"] > div > div {
     background: #ffffff !important;
@@ -143,13 +136,9 @@ header[data-testid="stHeader"] {
     border-radius: 8px !important;
 }
 
-/* HR */
 hr { border-color: #e2e8f0 !important; }
-
-/* Container padding */
 .block-container { padding: 1.5rem 2rem !important; }
 
-/* Dataframe */
 [data-testid="stDataFrame"] {
     border: 1px solid #e2e8f0 !important;
     border-radius: 10px !important;
@@ -158,7 +147,6 @@ hr { border-color: #e2e8f0 !important; }
 [data-testid="stDataFrame"] > div { background: #ffffff !important; border-radius: 10px !important; }
 [data-testid="stDataFrame"] iframe { background: #ffffff !important; border-radius: 10px !important; }
 
-/* Expander */
 [data-testid="stExpander"] {
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
@@ -167,7 +155,6 @@ hr { border-color: #e2e8f0 !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── COLOR PALETTE ──────────────────────────────────────────
 BG    = "#f4f6fb"
 SURF  = "#ffffff"
 GRID  = "#e2e8f0"
@@ -233,7 +220,6 @@ with st.sidebar:
         rl_f = round(last['RL_Team'].mean(), 1)
         gr_f = round(last['Greedy_Agent'].mean(), 1)
         rn_f = round(last['Random_Agent'].mean(), 1)
-        # dynamic q_states from real data
         q_states_label = f"~{int(df['Q_States'].iloc[-1]):,}" if 'Q_States' in df.columns else "~8,920"
 
         st.markdown(f"""
@@ -282,9 +268,10 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-t1, t2, t3, t4, t5 = st.tabs([
+t1, t2, t3, t4, t5, t6 = st.tabs([
     "📊  Overview", "📈  Learning Curve",
-    "🌐  Network & Sim", "🤖  Agents", "💡  Insights"
+    "🌐  Network & Sim", "🤖  Agents", "💡  Insights",
+    "⚔️  Adversarial Arena"
 ])
 
 # ══════════════════════════════════════════════════════════
@@ -323,22 +310,15 @@ with t1:
             fig.add_vrect(x0=x0, x1=x1, fillcolor=clr, line_width=0,
                          annotation_text=lbl, annotation_position="top left",
                          annotation_font=dict(color="#94a3b8", size=10, family=MONO))
-        fig.add_trace(go.Scatter(
-            x=df['Episode'], y=smooth(df['RL_Team'], w),
+        fig.add_trace(go.Scatter(x=df['Episode'], y=smooth(df['RL_Team'], w),
             name="RL Team", fill='tozeroy', fillcolor='rgba(14,165,233,0.07)',
-            line=dict(color=C_RL, width=1.2),
-            hovertemplate="Ep %{x}<br>RL: %{y:.1f}<extra></extra>"
-        ))
-        fig.add_trace(go.Scatter(
-            x=df['Episode'], y=smooth(df['Greedy_Agent'], w),
+            line=dict(color=C_RL, width=1.2), hovertemplate="Ep %{x}<br>RL: %{y:.1f}<extra></extra>"))
+        fig.add_trace(go.Scatter(x=df['Episode'], y=smooth(df['Greedy_Agent'], w),
             name="Greedy", line=dict(color=C_GR, width=1.0, dash='dot'),
-            hovertemplate="Ep %{x}<br>Greedy: %{y:.1f}<extra></extra>"
-        ))
-        fig.add_trace(go.Scatter(
-            x=df['Episode'], y=smooth(df['Random_Agent'], w),
+            hovertemplate="Ep %{x}<br>Greedy: %{y:.1f}<extra></extra>"))
+        fig.add_trace(go.Scatter(x=df['Episode'], y=smooth(df['Random_Agent'], w),
             name="Random", line=dict(color=C_RN, width=1.0, dash='dash'),
-            hovertemplate="Ep %{x}<br>Random: %{y:.1f}<extra></extra>"
-        ))
+            hovertemplate="Ep %{x}<br>Random: %{y:.1f}<extra></extra>"))
         dl(fig, h=360, title="2000-episode reward trajectory (smoothed)")
         fig.update_layout(xaxis_title="Episode", yaxis_title="Reward",
                           xaxis=dict(gridcolor=GRID, tickfont=dict(color=TXT,size=11)),
@@ -359,11 +339,9 @@ with t1:
         table_rows_html = ""
         for r in rows:
             win_badge = (
-                "<span style='background:#d1fae5;color:#065f46;border-radius:20px;"
-                "padding:2px 8px;font-size:0.65rem;font-weight:600;border:1px solid #6ee7b7'>WIN</span>"
+                "<span style='background:#d1fae5;color:#065f46;border-radius:20px;padding:2px 8px;font-size:0.65rem;font-weight:600;border:1px solid #6ee7b7'>WIN</span>"
                 if r["W"] else
-                "<span style='background:#fef3c7;color:#92400e;border-radius:20px;"
-                "padding:2px 8px;font-size:0.65rem;font-weight:600;border:1px solid #fcd34d'>LOSS</span>"
+                "<span style='background:#fef3c7;color:#92400e;border-radius:20px;padding:2px 8px;font-size:0.65rem;font-weight:600;border:1px solid #fcd34d'>LOSS</span>"
             )
             table_rows_html += f"""
             <tr style='border-bottom:1px solid #f1f5f9'>
@@ -374,8 +352,7 @@ with t1:
               <td style='padding:7px 6px;text-align:center'>{win_badge}</td>
             </tr>"""
         st.markdown(f"""
-        <div style='background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;
-        overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04)'>
+        <div style='background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04)'>
           <table style='width:100%;border-collapse:collapse'>
             <thead>
               <tr style='background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-bottom:2px solid #ddd6fe'>
@@ -394,29 +371,21 @@ with t1:
     c1, c2 = st.columns(2)
     with c1:
         fig2 = go.Figure()
-        for col,clr,nm in [("RL_Team",C_RL,"RL Team"),
-                            ("Greedy_Agent",C_GR,"Greedy"),
-                            ("Random_Agent",C_RN,"Random")]:
-            fig2.add_trace(go.Violin(y=df[col], name=nm, line_color=clr,
-                                     fillcolor="rgba(0,0,0,0)",
+        for col,clr,nm in [("RL_Team",C_RL,"RL Team"),("Greedy_Agent",C_GR,"Greedy"),("Random_Agent",C_RN,"Random")]:
+            fig2.add_trace(go.Violin(y=df[col], name=nm, line_color=clr, fillcolor="rgba(0,0,0,0)",
                                      box_visible=True, meanline_visible=True,
                                      meanline=dict(color=clr, width=1.2),
-                                     box=dict(line=dict(color=clr, width=0.8)),
-                                     opacity=0.9))
+                                     box=dict(line=dict(color=clr, width=0.8)), opacity=0.9))
         dl(fig2, h=300, title="Score distribution — all 2000 episodes")
         st.plotly_chart(fig2, use_container_width=True)
 
     with c2:
         df2 = df.copy()
         df2['adv'] = df2['RL_Team'] - df2['Greedy_Agent']
-        adv_smooth = smooth(df2['adv'], 35)
         fig3 = go.Figure()
-        fig3.add_trace(go.Scatter(
-            x=df2['Episode'], y=adv_smooth,
-            name="RL − Greedy", fill='tozeroy',
-            fillcolor='rgba(16,185,129,0.08)',
-            line=dict(color=C_GRN, width=1.2),
-        ))
+        fig3.add_trace(go.Scatter(x=df2['Episode'], y=smooth(df2['adv'], 35),
+            name="RL − Greedy", fill='tozeroy', fillcolor='rgba(16,185,129,0.08)',
+            line=dict(color=C_GRN, width=1.2)))
         fig3.add_hline(y=0, line_dash="dash", line_color="#cbd5e1", line_width=1)
         dl(fig3, h=300, title="RL advantage over Greedy (smoothed)")
         fig3.update_layout(yaxis_title="Reward gap", showlegend=False)
@@ -436,49 +405,22 @@ with t2:
     with cc2:
         show_raw = st.checkbox("Show raw data underneath", False)
     with cc3:
-        phase = st.selectbox("Highlight phase", [
-            "All episodes",
-            "Exploration (1–600)",
-            "Transition (601–1000)",
-            "Exploitation (1001–2000)"
-        ])
+        phase = st.selectbox("Highlight phase", ["All episodes","Exploration (1–600)","Transition (601–1000)","Exploitation (1001–2000)"])
 
-    ep_map = {"All episodes":(1,2000),"Exploration (1–600)":(1,600),
-              "Transition (601–1000)":(601,1000),"Exploitation (1001–2000)":(1001,2000)}
+    ep_map = {"All episodes":(1,2000),"Exploration (1–600)":(1,600),"Transition (601–1000)":(601,1000),"Exploitation (1001–2000)":(1001,2000)}
     lo, hi = ep_map[phase]
     dff = df[(df['Episode']>=lo)&(df['Episode']<=hi)].copy()
 
     fig4 = go.Figure()
     if phase == "All episodes":
-        for x0,x1,clr,lbl in [(1,600,"rgba(139,92,246,0.07)","Exploration"),
-                                (600,1000,"rgba(245,158,11,0.06)","Transition"),
-                                (1000,2000,"rgba(16,185,129,0.05)","Exploitation")]:
-            fig4.add_vrect(x0=x0,x1=x1,fillcolor=clr,line_width=0,
-                          annotation_text=lbl,annotation_position="top left",
-                          annotation_font=dict(color="#94a3b8",size=10,family=MONO))
+        for x0,x1,clr,lbl in [(1,600,"rgba(139,92,246,0.07)","Exploration"),(600,1000,"rgba(245,158,11,0.06)","Transition"),(1000,2000,"rgba(16,185,129,0.05)","Exploitation")]:
+            fig4.add_vrect(x0=x0,x1=x1,fillcolor=clr,line_width=0,annotation_text=lbl,annotation_position="top left",annotation_font=dict(color="#94a3b8",size=10,family=MONO))
     if show_raw:
-        for col,clr in [("RL_Team","rgba(14,165,233,0.15)"),
-                        ("Greedy_Agent","rgba(245,158,11,0.12)"),
-                        ("Random_Agent","rgba(244,63,94,0.10)")]:
-            fig4.add_trace(go.Scatter(x=dff['Episode'],y=dff[col],
-                                      line=dict(color=clr,width=0.5),
-                                      showlegend=False,hoverinfo='skip'))
-    fig4.add_trace(go.Scatter(
-        x=dff['Episode'], y=smooth(dff['RL_Team'],window),
-        name="RL Team", fill='tozeroy', fillcolor='rgba(14,165,233,0.07)',
-        line=dict(color=C_RL, width=1.2),
-        hovertemplate="Ep %{x}<br>RL: %{y:.1f}<extra></extra>"
-    ))
-    fig4.add_trace(go.Scatter(
-        x=dff['Episode'], y=smooth(dff['Greedy_Agent'],window),
-        name="Greedy", line=dict(color=C_GR, width=1.0, dash='dot'),
-        hovertemplate="Ep %{x}<br>Greedy: %{y:.1f}<extra></extra>"
-    ))
-    fig4.add_trace(go.Scatter(
-        x=dff['Episode'], y=smooth(dff['Random_Agent'],window),
-        name="Random", line=dict(color=C_RN, width=1.0, dash='dash'),
-        hovertemplate="Ep %{x}<br>Random: %{y:.1f}<extra></extra>"
-    ))
+        for col,clr in [("RL_Team","rgba(14,165,233,0.15)"),("Greedy_Agent","rgba(245,158,11,0.12)"),("Random_Agent","rgba(244,63,94,0.10)")]:
+            fig4.add_trace(go.Scatter(x=dff['Episode'],y=dff[col],line=dict(color=clr,width=0.5),showlegend=False,hoverinfo='skip'))
+    fig4.add_trace(go.Scatter(x=dff['Episode'],y=smooth(dff['RL_Team'],window),name="RL Team",fill='tozeroy',fillcolor='rgba(14,165,233,0.07)',line=dict(color=C_RL,width=1.2),hovertemplate="Ep %{x}<br>RL: %{y:.1f}<extra></extra>"))
+    fig4.add_trace(go.Scatter(x=dff['Episode'],y=smooth(dff['Greedy_Agent'],window),name="Greedy",line=dict(color=C_GR,width=1.0,dash='dot'),hovertemplate="Ep %{x}<br>Greedy: %{y:.1f}<extra></extra>"))
+    fig4.add_trace(go.Scatter(x=dff['Episode'],y=smooth(dff['Random_Agent'],window),name="Random",line=dict(color=C_RN,width=1.0,dash='dash'),hovertemplate="Ep %{x}<br>Random: %{y:.1f}<extra></extra>"))
     dl(fig4, h=380, title=f"Learning curve — {phase}")
     fig4.update_layout(xaxis_title="Episode", yaxis_title="Total Reward")
     st.plotly_chart(fig4, use_container_width=True)
@@ -486,49 +428,30 @@ with t2:
     c1,c2,c3 = st.columns(3)
     with c1:
         eps_vals = [max(0.05, 1.0*(0.997**i)) for i in range(2000)]
-        fig5 = go.Figure(go.Scatter(
-            x=list(range(1,2001)), y=eps_vals,
-            line=dict(color=C_PUR, width=1.2),
-            fill='tozeroy', fillcolor='rgba(139,92,246,0.08)'
-        ))
+        fig5 = go.Figure(go.Scatter(x=list(range(1,2001)),y=eps_vals,line=dict(color=C_PUR,width=1.2),fill='tozeroy',fillcolor='rgba(139,92,246,0.08)'))
         dl(fig5, h=210, title="Epsilon decay", show_legend=False)
-        fig5.update_layout(yaxis=dict(range=[0,1.05],gridcolor=GRID,tickfont=dict(color=TXT,size=10)),
-                           xaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)))
+        fig5.update_layout(yaxis=dict(range=[0,1.05],gridcolor=GRID,tickfont=dict(color=TXT,size=10)),xaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)))
         st.plotly_chart(fig5, use_container_width=True)
 
     with c2:
-        # ── REAL Q-TABLE GROWTH FROM results.csv ──
         if 'Q_States' in df.columns:
-            q_x    = df['Episode']
-            q_data = df['Q_States']
+            q_x, q_data = df['Episode'], df['Q_States']
         else:
-            q_x    = list(range(1, 2001))
+            q_x = list(range(1,2001))
             q_data = [int(1400+i*3.7+np.sin(i*0.05)*150) for i in range(2000)]
-        fig6 = go.Figure(go.Scatter(
-            x=q_x, y=q_data,
-            line=dict(color="#0891b2", width=1.2),
-            fill='tozeroy', fillcolor='rgba(8,145,178,0.08)',
-            hovertemplate="Ep %{x}<br>Q-states: %{y:,}<extra></extra>"
-        ))
+        fig6 = go.Figure(go.Scatter(x=q_x,y=q_data,line=dict(color="#0891b2",width=1.2),fill='tozeroy',fillcolor='rgba(8,145,178,0.08)',hovertemplate="Ep %{x}<br>Q-states: %{y:,}<extra></extra>"))
         dl(fig6, h=210, title="Q-table growth (real data)", show_legend=False)
-        fig6.update_layout(yaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)),
-                           xaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)))
+        fig6.update_layout(yaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)),xaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)))
         st.plotly_chart(fig6, use_container_width=True)
 
     with c3:
         fig7 = go.Figure()
-        for col,clr,nm,dsh in [("RL_Team",C_RL,"RL",None),
-                                 ("Greedy_Agent",C_GR,"Greedy","dot"),
-                                 ("Random_Agent",C_RN,"Random","dash")]:
+        for col,clr,nm,dsh in [("RL_Team",C_RL,"RL",None),("Greedy_Agent",C_GR,"Greedy","dot"),("Random_Agent",C_RN,"Random","dash")]:
             lkw = dict(color=clr, width=1.2)
             if dsh: lkw['dash'] = dsh
-            fig7.add_trace(go.Scatter(
-                x=df['Episode'], y=smooth(df[col],200),
-                name=nm, line=lkw
-            ))
+            fig7.add_trace(go.Scatter(x=df['Episode'],y=smooth(df[col],200),name=nm,line=lkw))
         dl(fig7, h=210, title="Rolling 200-ep average")
-        fig7.update_layout(yaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)),
-                           xaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)))
+        fig7.update_layout(yaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)),xaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)))
         st.plotly_chart(fig7, use_container_width=True)
 
 # ══════════════════════════════════════════════════════════
@@ -542,36 +465,23 @@ with t3:
     col_net, col_ctrl = st.columns([1.6, 1])
 
     with col_ctrl:
-        st.markdown("""<div style='font-size:0.68rem;color:#0ea5e9;font-family:JetBrains Mono;
-        letter-spacing:0.1em;margin-bottom:14px'>SIMULATION CONTROLS</div>""", unsafe_allow_html=True)
-
+        st.markdown("""<div style='font-size:0.68rem;color:#0ea5e9;font-family:JetBrains Mono;letter-spacing:0.1em;margin-bottom:14px'>SIMULATION CONTROLS</div>""", unsafe_allow_html=True)
         agent_type = st.selectbox("Agent type", ["RL Team","Greedy","Random"], key="sim_agent")
         num_steps  = st.slider("Steps", 5, 30, 15, key="sim_steps_sl")
-
         if st.button("▶  RUN EPISODE"):
             st.session_state['do_sim'] = True
             st.session_state['sim_atype'] = agent_type
             st.session_state['sim_nsteps'] = num_steps
-
         if st.button("↺  RESET"):
             for k in ['sim_risks','sim_reward','sim_patched','sim_log','ppos','spos']:
                 if k in st.session_state: del st.session_state[k]
-
         st.divider()
-        st.markdown("""<div style='font-size:0.68rem;color:#0ea5e9;font-family:JetBrains Mono;
-        letter-spacing:0.1em;margin-bottom:10px'>NODE RISK LEGEND</div>""", unsafe_allow_html=True)
-        for lbl, clr in [("Safe / patched","#10b981"),("Low risk","#3b82f6"),
-                          ("Medium risk","#f59e0b"),("High risk","#f43f5e")]:
-            st.markdown(f"""<div style='display:flex;align-items:center;gap:8px;
-            font-size:0.8rem;margin-bottom:6px;color:#475569'>
-            <span style='width:11px;height:11px;border-radius:50%;background:{clr};
-            display:inline-block;flex-shrink:0'></span>{lbl}</div>""", unsafe_allow_html=True)
-        st.markdown("""
-        <div style='margin-top:8px'>
-        <div style='display:flex;align-items:center;gap:8px;font-size:0.8rem;margin-bottom:6px;color:#475569'>
-        <span style='width:14px;height:14px;border-radius:50%;border:2px solid #8b5cf6;display:inline-block;flex-shrink:0'></span>Scanner position</div>
-        <div style='display:flex;align-items:center;gap:8px;font-size:0.8rem;color:#475569'>
-        <span style='width:14px;height:14px;border-radius:50%;border:2px solid #0ea5e9;display:inline-block;flex-shrink:0'></span>Patcher position</div>
+        st.markdown("""<div style='font-size:0.68rem;color:#0ea5e9;font-family:JetBrains Mono;letter-spacing:0.1em;margin-bottom:10px'>NODE RISK LEGEND</div>""", unsafe_allow_html=True)
+        for lbl, clr in [("Safe / patched","#10b981"),("Low risk","#3b82f6"),("Medium risk","#f59e0b"),("High risk","#f43f5e")]:
+            st.markdown(f"""<div style='display:flex;align-items:center;gap:8px;font-size:0.8rem;margin-bottom:6px;color:#475569'><span style='width:11px;height:11px;border-radius:50%;background:{clr};display:inline-block;flex-shrink:0'></span>{lbl}</div>""", unsafe_allow_html=True)
+        st.markdown("""<div style='margin-top:8px'>
+        <div style='display:flex;align-items:center;gap:8px;font-size:0.8rem;margin-bottom:6px;color:#475569'><span style='width:14px;height:14px;border-radius:50%;border:2px solid #8b5cf6;display:inline-block;flex-shrink:0'></span>Scanner position</div>
+        <div style='display:flex;align-items:center;gap:8px;font-size:0.8rem;color:#475569'><span style='width:14px;height:14px;border-radius:50%;border:2px solid #0ea5e9;display:inline-block;flex-shrink:0'></span>Patcher position</div>
         </div>""", unsafe_allow_html=True)
 
     with col_net:
@@ -581,14 +491,10 @@ with t3:
             nsteps = st.session_state.get('sim_nsteps', 15)
             risks  = list(env.node_risks.copy())
             sp = 0; pp = 0; reward = 0; patched = 0; log = []
-
             for step in range(nsteps):
                 nb_p = list(G.neighbors(pp))
                 if not nb_p: continue
-                if atype == 'Random':
-                    action = random.choice(nb_p)
-                else:
-                    action = max(nb_p, key=lambda n: risks[n])
+                action = random.choice(nb_p) if atype == 'Random' else max(nb_p, key=lambda n: risks[n])
                 nb_s = list(G.neighbors(sp))
                 if nb_s and atype == 'RL Team':
                     sp = max(nb_s, key=lambda n: risks[n])
@@ -605,78 +511,40 @@ with t3:
                         for nb in G.neighbors(node):
                             if risks[nb] < risks[node] and random.random() < 0.15:
                                 risks[nb] = min(int(risks[nb])+1, 3)
-
-            st.session_state.update({'sim_risks':risks,'sim_reward':reward,
-                                      'sim_patched':patched,'sim_log':log,'ppos':pp,'spos':sp})
+            st.session_state.update({'sim_risks':risks,'sim_reward':reward,'sim_patched':patched,'sim_log':log,'ppos':pp,'spos':sp})
 
         risks = st.session_state.get('sim_risks', list(env.node_risks))
         ppos  = st.session_state.get('ppos', 0)
         spos  = st.session_state.get('spos', 0)
-
-        RCOL = {0:'#10b981', 1:'#3b82f6', 2:'#f59e0b', 3:'#f43f5e'}
+        RCOL  = {0:'#10b981', 1:'#3b82f6', 2:'#f59e0b', 3:'#f43f5e'}
         nsizes = [12 + len(list(G.neighbors(n)))*3.5 for n in range(15)]
-
         ex, ey = [], []
         for u,v in G.edges():
             x0,y0=pos[u]; x1,y1=pos[v]
             ex+=[x0,x1,None]; ey+=[y0,y1,None]
-
-        nx_ = [pos[n][0] for n in range(15)]
-        ny_ = [pos[n][1] for n in range(15)]
-        nc  = [RCOL[int(risks[n])] for n in range(15)]
-
         fig_n = go.Figure()
-        fig_n.add_trace(go.Scatter(x=ex, y=ey, mode='lines',
-            line=dict(color='rgba(148,163,184,0.35)', width=0.8),
-            hoverinfo='none', showlegend=False))
-        fig_n.add_trace(go.Scatter(
-            x=nx_, y=ny_, mode='markers+text',
-            marker=dict(size=nsizes, color=nc,
-                        line=dict(color='rgba(255,255,255,0.8)', width=1.5)),
-            text=[str(n) for n in range(15)],
-            textposition='middle center',
-            textfont=dict(size=10, color='#1e293b', family=MONO),
-            hovertemplate=[
-                f"<b>Node {n}</b><br>"
-                f"Risk: {['safe','low','med','high'][int(risks[n])]}<br>"
-                f"Type: {['endpoint','server','database'][env.node_types[n]]}<br>"
-                f"Connections: {len(list(G.neighbors(n)))}<extra></extra>"
-                for n in range(15)
-            ], showlegend=False))
-        fig_n.add_trace(go.Scatter(
-            x=[pos[spos][0]], y=[pos[spos][1]], mode='markers',
-            marker=dict(size=nsizes[spos]+18, color='rgba(0,0,0,0)',
-                        line=dict(color='#8b5cf6', width=2)),
-            name='Scanner', hoverinfo='skip'))
-        fig_n.add_trace(go.Scatter(
-            x=[pos[ppos][0]], y=[pos[ppos][1]], mode='markers',
-            marker=dict(size=nsizes[ppos]+26, color='rgba(0,0,0,0)',
-                        line=dict(color='#0ea5e9', width=2)),
-            name='Patcher', hoverinfo='skip'))
-        fig_n.update_layout(
-            plot_bgcolor=SURF, paper_bgcolor=SURF, height=370,
-            margin=dict(l=10,r=10,t=10,b=10), showlegend=True,
-            legend=dict(bgcolor="rgba(255,255,255,0.92)", bordercolor=GRID, borderwidth=1,
-                        font=dict(size=11, color=TXT2), x=0.01, y=0.99),
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            hoverlabel=dict(bgcolor=SURF, bordercolor=GRID, font=dict(color="#1e293b")))
+        fig_n.add_trace(go.Scatter(x=ex,y=ey,mode='lines',line=dict(color='rgba(148,163,184,0.35)',width=0.8),hoverinfo='none',showlegend=False))
+        fig_n.add_trace(go.Scatter(x=[pos[n][0] for n in range(15)],y=[pos[n][1] for n in range(15)],mode='markers+text',
+            marker=dict(size=nsizes,color=[RCOL[int(risks[n])] for n in range(15)],line=dict(color='rgba(255,255,255,0.8)',width=1.5)),
+            text=[str(n) for n in range(15)],textposition='middle center',textfont=dict(size=10,color='#1e293b',family=MONO),
+            hovertemplate=[f"<b>Node {n}</b><br>Risk: {['safe','low','med','high'][int(risks[n])]}<br>Type: {['endpoint','server','database'][env.node_types[n]]}<br>Connections: {len(list(G.neighbors(n)))}<extra></extra>" for n in range(15)],showlegend=False))
+        fig_n.add_trace(go.Scatter(x=[pos[spos][0]],y=[pos[spos][1]],mode='markers',marker=dict(size=nsizes[spos]+18,color='rgba(0,0,0,0)',line=dict(color='#8b5cf6',width=2)),name='Scanner',hoverinfo='skip'))
+        fig_n.add_trace(go.Scatter(x=[pos[ppos][0]],y=[pos[ppos][1]],mode='markers',marker=dict(size=nsizes[ppos]+26,color='rgba(0,0,0,0)',line=dict(color='#0ea5e9',width=2)),name='Patcher',hoverinfo='skip'))
+        fig_n.update_layout(plot_bgcolor=SURF,paper_bgcolor=SURF,height=370,margin=dict(l=10,r=10,t=10,b=10),showlegend=True,
+            legend=dict(bgcolor="rgba(255,255,255,0.92)",bordercolor=GRID,borderwidth=1,font=dict(size=11,color=TXT2),x=0.01,y=0.99),
+            xaxis=dict(showgrid=False,zeroline=False,showticklabels=False),yaxis=dict(showgrid=False,zeroline=False,showticklabels=False),
+            hoverlabel=dict(bgcolor=SURF,bordercolor=GRID,font=dict(color="#1e293b")))
         st.plotly_chart(fig_n, use_container_width=True)
 
     m1,m2,m3 = st.columns(3)
     m1.metric("Nodes patched",  st.session_state.get('sim_patched', 0))
     m2.metric("Total reward",   round(st.session_state.get('sim_reward', 0), 1))
     m3.metric("Still at risk",  int(sum(1 for r in st.session_state.get('sim_risks', env.node_risks) if r > 0)))
-
     if st.session_state.get('sim_log'):
         with st.expander("Episode log", expanded=True):
             for step,node,risk,gain in st.session_state['sim_log']:
                 col = "#10b981" if gain > 0 else "#f43f5e"
-                st.markdown(f"""<div style='font-family:JetBrains Mono;font-size:0.76rem;
-                color:{col};padding:2px 0;border-bottom:1px solid #f1f5f9'>
-                step {step:02d} &nbsp;→&nbsp; node <b>{node}</b> &nbsp;|&nbsp;
-                risk={risk} &nbsp;|&nbsp; {'+' if gain>=0 else ''}{gain} pts</div>""",
-                unsafe_allow_html=True)
+                st.markdown(f"""<div style='font-family:JetBrains Mono;font-size:0.76rem;color:{col};padding:2px 0;border-bottom:1px solid #f1f5f9'>step {step:02d} &nbsp;→&nbsp; node <b>{node}</b> &nbsp;|&nbsp; risk={risk} &nbsp;|&nbsp; {'+' if gain>=0 else ''}{gain} pts</div>""",unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
 # TAB 4 — AGENTS
@@ -687,89 +555,54 @@ with t4:
         st.stop()
 
     last200 = df.tail(200)
-    rl_avg = round(last200['RL_Team'].mean(), 1)
-    gr_avg = round(last200['Greedy_Agent'].mean(), 1)
-    rn_avg = round(last200['Random_Agent'].mean(), 1)
+    rl_avg  = round(last200['RL_Team'].mean(), 1)
+    gr_avg  = round(last200['Greedy_Agent'].mean(), 1)
+    rn_avg  = round(last200['Random_Agent'].mean(), 1)
 
     agents = [
-        {"name":"Scanner Bot","color":"#3b82f6","icon":"🔍",
-         "role":"RL team · explorer","speed":"2x","energy":"5 pts/move","moves":"20","learns":"Yes ✓","patch":"No",
-         "desc":"Explores fast, marks high-risk nodes for Patcher. Cannot fix — coordination earns +2 bonus reward."},
-        {"name":"Patcher Bot","color":"#10b981","icon":"🔧",
-         "role":"RL team · fixer","speed":"1x","energy":"15 pts/move","moves":"6","learns":"Yes ✓","patch":"Yes",
-         "desc":"Fixes vulnerabilities. Only 6 moves per episode — must prioritize. Earns bonus for following Scanner."},
-        {"name":"Greedy Agent","color":"#f59e0b","icon":"⚡",
-         "role":"baseline · deterministic","speed":"1x","energy":"15 pts/move","moves":"6","learns":"No","patch":"Yes",
-         "desc":"Always picks highest-risk neighbor. Fails in dynamic environments where threat spread changes priorities."},
-        {"name":"Random Agent","color":"#f43f5e","icon":"🎲",
-         "role":"baseline · random","speed":"1x","energy":"15 pts/move","moves":"6","learns":"No","patch":"Yes",
-         "desc":"Picks random neighbors. Establishes the worst-case performance floor. RL beats it by +115%."},
+        {"name":"Scanner Bot","color":"#3b82f6","icon":"🔍","role":"RL team · explorer","speed":"2x","energy":"5 pts/move","moves":"20","learns":"Yes ✓","patch":"No","desc":"Explores fast, marks high-risk nodes for Patcher. Cannot fix — coordination earns +2 bonus reward."},
+        {"name":"Patcher Bot","color":"#10b981","icon":"🔧","role":"RL team · fixer","speed":"1x","energy":"15 pts/move","moves":"6","learns":"Yes ✓","patch":"Yes","desc":"Fixes vulnerabilities. Only 6 moves per episode — must prioritize. Earns bonus for following Scanner."},
+        {"name":"Greedy Agent","color":"#f59e0b","icon":"⚡","role":"baseline · deterministic","speed":"1x","energy":"15 pts/move","moves":"6","learns":"No","patch":"Yes","desc":"Always picks highest-risk neighbor. Fails in dynamic environments where threat spread changes priorities."},
+        {"name":"Random Agent","color":"#f43f5e","icon":"🎲","role":"baseline · random","speed":"1x","energy":"15 pts/move","moves":"6","learns":"No","patch":"Yes","desc":"Picks random neighbors. Establishes the worst-case performance floor. RL beats it by +115%."},
     ]
-
     c1, c2 = st.columns(2)
     for i, a in enumerate(agents):
         col = c1 if i % 2 == 0 else c2
         col.markdown(f"""
-        <div style='background:#ffffff;border:1px solid #e2e8f0;border-left:3px solid {a["color"]};
-        border-radius:12px;padding:16px 20px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04)'>
+        <div style='background:#ffffff;border:1px solid #e2e8f0;border-left:3px solid {a["color"]};border-radius:12px;padding:16px 20px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04)'>
           <div style='display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px'>
-            <div>
-              <span style='font-size:0.95rem;font-weight:600;color:#0f172a'>{a["icon"]} {a["name"]}</span>
-              <div style='font-size:0.68rem;color:#94a3b8;font-family:JetBrains Mono;margin-top:2px'>{a["role"]}</div>
-            </div>
-            <span style='font-size:0.68rem;background:{a["color"]}18;border:1px solid {a["color"]}30;
-            color:{a["color"]};padding:3px 10px;border-radius:20px;font-family:JetBrains Mono;
-            white-space:nowrap'>LEARNS: {a["learns"]}</span>
+            <div><span style='font-size:0.95rem;font-weight:600;color:#0f172a'>{a["icon"]} {a["name"]}</span>
+            <div style='font-size:0.68rem;color:#94a3b8;font-family:JetBrains Mono;margin-top:2px'>{a["role"]}</div></div>
+            <span style='font-size:0.68rem;background:{a["color"]}18;border:1px solid {a["color"]}30;color:{a["color"]};padding:3px 10px;border-radius:20px;font-family:JetBrains Mono;white-space:nowrap'>LEARNS: {a["learns"]}</span>
           </div>
           <div style='display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px'>
-            <div style='font-size:0.72rem'><div style='color:#94a3b8;margin-bottom:2px'>Speed</div>
-              <div style='font-family:JetBrains Mono;color:#1e293b'>{a["speed"]}</div></div>
-            <div style='font-size:0.72rem'><div style='color:#94a3b8;margin-bottom:2px'>Energy</div>
-              <div style='font-family:JetBrains Mono;color:#1e293b'>{a["energy"]}</div></div>
-            <div style='font-size:0.72rem'><div style='color:#94a3b8;margin-bottom:2px'>Max moves</div>
-              <div style='font-family:JetBrains Mono;color:#1e293b'>{a["moves"]}</div></div>
-            <div style='font-size:0.72rem'><div style='color:#94a3b8;margin-bottom:2px'>Can patch</div>
-              <div style='font-family:JetBrains Mono;color:#1e293b'>{a["patch"]}</div></div>
+            <div style='font-size:0.72rem'><div style='color:#94a3b8;margin-bottom:2px'>Speed</div><div style='font-family:JetBrains Mono;color:#1e293b'>{a["speed"]}</div></div>
+            <div style='font-size:0.72rem'><div style='color:#94a3b8;margin-bottom:2px'>Energy</div><div style='font-family:JetBrains Mono;color:#1e293b'>{a["energy"]}</div></div>
+            <div style='font-size:0.72rem'><div style='color:#94a3b8;margin-bottom:2px'>Max moves</div><div style='font-family:JetBrains Mono;color:#1e293b'>{a["moves"]}</div></div>
+            <div style='font-size:0.72rem'><div style='color:#94a3b8;margin-bottom:2px'>Can patch</div><div style='font-family:JetBrains Mono;color:#1e293b'>{a["patch"]}</div></div>
           </div>
           <div style='font-size:0.78rem;color:#64748b;line-height:1.6;border-top:1px solid #f1f5f9;padding-top:8px'>{a["desc"]}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
-
     ch1, ch2 = st.columns(2)
     with ch1:
         rows2 = []
         for s in range(0,2000,200):
             c = df[(df['Episode']>s)&(df['Episode']<=s+200)]
-            rows2.append({"Phase":f"Ep {s+1}",
-                          "RL":round(c['RL_Team'].mean(),1),
-                          "Greedy":round(c['Greedy_Agent'].mean(),1),
-                          "Random":round(c['Random_Agent'].mean(),1)})
+            rows2.append({"Phase":f"Ep {s+1}","RL":round(c['RL_Team'].mean(),1),"Greedy":round(c['Greedy_Agent'].mean(),1),"Random":round(c['Random_Agent'].mean(),1)})
         pf2 = pd.DataFrame(rows2)
         fig8 = go.Figure()
         for col2,clr,nm in [('RL',C_RL,'RL Team'),('Greedy',C_GR,'Greedy'),('Random',C_RN,'Random')]:
-            fig8.add_trace(go.Bar(x=pf2['Phase'], y=pf2[col2], name=nm,
-                                  marker_color=clr, marker_opacity=0.75, marker_line_width=0))
+            fig8.add_trace(go.Bar(x=pf2['Phase'],y=pf2[col2],name=nm,marker_color=clr,marker_opacity=0.75,marker_line_width=0))
         dl(fig8, h=260, title="Phase performance comparison")
         fig8.update_layout(barmode='group', bargap=0.12, bargroupgap=0.04)
         st.plotly_chart(fig8, use_container_width=True)
-
     with ch2:
         fig9 = go.Figure()
-        fig9.add_trace(go.Bar(
-            x=['RL Team','Greedy','Random'],
-            y=[rl_avg, gr_avg, rn_avg],
-            marker_color=[C_RL, C_GR, C_RN],
-            marker_opacity=0.8, marker_line_width=0,
-            text=[f"{v}" for v in [rl_avg, gr_avg, rn_avg]],
-            textposition='outside',
-            textfont=dict(color='#475569', family=MONO, size=13),
-            width=0.45
-        ))
+        fig9.add_trace(go.Bar(x=['RL Team','Greedy','Random'],y=[rl_avg,gr_avg,rn_avg],marker_color=[C_RL,C_GR,C_RN],marker_opacity=0.8,marker_line_width=0,text=[f"{v}" for v in [rl_avg,gr_avg,rn_avg]],textposition='outside',textfont=dict(color='#475569',family=MONO,size=13),width=0.45))
         dl(fig9, h=260, title="Final 200-episode average", show_legend=False)
-        fig9.update_layout(yaxis=dict(range=[0,max(rl_avg,gr_avg)*1.18],
-                                       gridcolor=GRID,tickfont=dict(color=TXT,size=11)))
+        fig9.update_layout(yaxis=dict(range=[0,max(rl_avg,gr_avg)*1.18],gridcolor=GRID,tickfont=dict(color=TXT,size=11)))
         st.plotly_chart(fig9, use_container_width=True)
 
 # ══════════════════════════════════════════════════════════
@@ -781,26 +614,22 @@ with t5:
         st.stop()
 
     last200 = df.tail(200)
-    rl_avg = round(last200['RL_Team'].mean(), 1)
-    gr_avg = round(last200['Greedy_Agent'].mean(), 1)
-    rn_avg = round(last200['Random_Agent'].mean(), 1)
+    rl_avg  = round(last200['RL_Team'].mean(), 1)
+    gr_avg  = round(last200['Greedy_Agent'].mean(), 1)
+    rn_avg  = round(last200['Random_Agent'].mean(), 1)
     q_final = f"{int(df['Q_States'].iloc[-1]):,}" if 'Q_States' in df.columns else "8,920"
 
     st.markdown(f"""
-    <div style='background:linear-gradient(135deg,rgba(14,165,233,0.07),rgba(139,92,246,0.05));
-    border:1px solid rgba(14,165,233,0.2);border-radius:14px;padding:22px 28px;margin-bottom:24px'>
+    <div style='background:linear-gradient(135deg,rgba(14,165,233,0.07),rgba(139,92,246,0.05));border:1px solid rgba(14,165,233,0.2);border-radius:14px;padding:22px 28px;margin-bottom:24px'>
       <div style='font-family:JetBrains Mono;font-size:0.68rem;color:#0ea5e9;letter-spacing:0.12em;margin-bottom:8px'>KEY FINDING</div>
       <div style='font-size:1.05rem;font-weight:600;margin-bottom:10px;color:#0f172a'>Why RL beats Greedy in dynamic environments</div>
       <div style='font-size:0.88rem;color:#64748b;line-height:1.85'>
         Greedy always picks the <em>current</em> highest-risk neighbor — optimal in static networks.
-        But when threats spread at <strong style='color:#f43f5e'>25% probability per step</strong>, a high-risk node today
-        becomes a chain reaction tomorrow. Our RL agent learned to
-        <strong style='color:#10b981'>proactively cut off spread chains</strong> — patching hub nodes with many
-        risky neighbors even if they aren't the single highest-risk node right now.
+        But when threats spread at <strong style='color:#f43f5e'>25% probability per step</strong>, a high-risk node today becomes a chain reaction tomorrow.
+        Our RL agent learned to <strong style='color:#10b981'>proactively cut off spread chains</strong> — patching hub nodes with many risky neighbors even if they aren't the single highest-risk node right now.
         This emergent behavior is <strong style='color:#0f172a'>impossible to hardcode</strong>.
       </div>
-    </div>
-    """, unsafe_allow_html=True)
+    </div>""", unsafe_allow_html=True)
 
     ins = [
         (f"+{round((rl_avg-rn_avg)/abs(rn_avg)*100,1)}%","#10b981","RL vs Random","From zero knowledge across 2000 episodes of trial and error"),
@@ -814,54 +643,323 @@ with t5:
     cols3 = [c1,c2,c3]
     for i,(val,clr,lbl,desc) in enumerate(ins):
         cols3[i%3].markdown(f"""
-        <div style='background:#ffffff;border:1px solid #e2e8f0;border-top:3px solid {clr};
-        border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.04)'>
+        <div style='background:#ffffff;border:1px solid #e2e8f0;border-top:3px solid {clr};border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.04)'>
           <div style='font-family:JetBrains Mono;font-size:1.7rem;font-weight:700;color:{clr};line-height:1'>{val}</div>
           <div style='font-size:0.8rem;font-weight:600;margin:6px 0 8px;color:#1e293b'>{lbl}</div>
           <div style='font-size:0.72rem;color:#94a3b8;line-height:1.6;border-top:1px solid #f1f5f9;padding-top:8px'>{desc}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
 
     st.divider()
     ch1, ch2 = st.columns(2)
     with ch1:
-        b_rl  = np.histogram(df['RL_Team'], bins=28)
-        b_gr  = np.histogram(df['Greedy_Agent'], bins=28)
-        b_rn  = np.histogram(df['Random_Agent'], bins=28)
+        b_rl = np.histogram(df['RL_Team'], bins=28)
+        b_gr = np.histogram(df['Greedy_Agent'], bins=28)
+        b_rn = np.histogram(df['Random_Agent'], bins=28)
         fig10 = go.Figure()
-        fig10.add_trace(go.Bar(x=b_rn[1][:-1],y=b_rn[0],name='Random',
-                               marker_color='rgba(244,63,94,0.45)',marker_line_width=0))
-        fig10.add_trace(go.Bar(x=b_gr[1][:-1],y=b_gr[0],name='Greedy',
-                               marker_color='rgba(245,158,11,0.55)',marker_line_width=0))
-        fig10.add_trace(go.Bar(x=b_rl[1][:-1],y=b_rl[0],name='RL Team',
-                               marker_color='rgba(14,165,233,0.65)',marker_line_width=0))
+        fig10.add_trace(go.Bar(x=b_rn[1][:-1],y=b_rn[0],name='Random',marker_color='rgba(244,63,94,0.45)',marker_line_width=0))
+        fig10.add_trace(go.Bar(x=b_gr[1][:-1],y=b_gr[0],name='Greedy',marker_color='rgba(245,158,11,0.55)',marker_line_width=0))
+        fig10.add_trace(go.Bar(x=b_rl[1][:-1],y=b_rl[0],name='RL Team',marker_color='rgba(14,165,233,0.65)',marker_line_width=0))
         dl(fig10, h=280, title="Score histogram — all 2000 episodes")
         fig10.update_layout(barmode='overlay', xaxis_title="Score", yaxis_title="Count")
         st.plotly_chart(fig10, use_container_width=True)
-
     with ch2:
-        rl_v  = df['RL_Team'].rolling(50).std()
-        gr_v  = df['Greedy_Agent'].rolling(50).std()
-        rn_v  = df['Random_Agent'].rolling(50).std()
         fig11 = go.Figure()
-        fig11.add_trace(go.Scatter(x=df['Episode'],y=rl_v,name='RL',
-                                    line=dict(color=C_RL,width=1.2)))
-        fig11.add_trace(go.Scatter(x=df['Episode'],y=gr_v,name='Greedy',
-                                    line=dict(color=C_GR,width=1.0,dash='dot')))
-        fig11.add_trace(go.Scatter(x=df['Episode'],y=rn_v,name='Random',
-                                    line=dict(color=C_RN,width=1.0,dash='dash')))
+        for col,clr,nm,dsh in [("RL_Team",C_RL,"RL",None),("Greedy_Agent",C_GR,"Greedy","dot"),("Random_Agent",C_RN,"Random","dash")]:
+            lkw = dict(color=clr,width=1.2)
+            if dsh: lkw['dash']=dsh
+            fig11.add_trace(go.Scatter(x=df['Episode'],y=df[col].rolling(50).std(),name=nm,line=lkw))
         dl(fig11, h=280, title="Score variance — consistency over time")
         fig11.update_layout(yaxis_title="Std deviation (rolling 50)")
         st.plotly_chart(fig11, use_container_width=True)
 
     corr = df[['RL_Team','Greedy_Agent','Random_Agent']].corr()
-    fig12 = go.Figure(go.Heatmap(
-        z=corr.values, x=['RL','Greedy','Random'], y=['RL','Greedy','Random'],
-        colorscale=[[0,"#f0f9ff"],[0.5,"#bae6fd"],[1,'#0ea5e9']],
-        text=np.round(corr.values,3), texttemplate="%{text}",
-        textfont=dict(size=14, family=MONO, color='#1e293b'),
-        showscale=True, zmin=-1, zmax=1
-    ))
+    fig12 = go.Figure(go.Heatmap(z=corr.values,x=['RL','Greedy','Random'],y=['RL','Greedy','Random'],
+        colorscale=[[0,"#f0f9ff"],[0.5,"#bae6fd"],[1,'#0ea5e9']],text=np.round(corr.values,3),texttemplate="%{text}",
+        textfont=dict(size=14,family=MONO,color='#1e293b'),showscale=True,zmin=-1,zmax=1))
     dl(fig12, h=240, title="Agent strategy correlation matrix", show_legend=False)
     fig12.update_layout(paper_bgcolor=SURF, plot_bgcolor=SURF)
     st.plotly_chart(fig12, use_container_width=True)
+
+# ══════════════════════════════════════════════════════════
+# TAB 6 — ADVERSARIAL ARENA (improved UI)
+# ══════════════════════════════════════════════════════════
+with t6:
+    try:
+        df_adv = pd.read_csv("red_blue_results.csv")
+    except:
+        st.error("Run `python red_blue_train.py` first to generate adversarial results.")
+        st.stop()
+
+    C_BLUE_DARK  = "#0ea5e9"
+    C_RED_DARK   = "#be123c"
+    C_RED_MID    = "#f43f5e"
+    C_RED_LIGHT  = "#fb7185"
+
+    # ── Top scoreboard ──────────────────────────────────────
+    blue_avg   = round(df_adv['Blue_Score'].mean(), 1)
+    red_avg    = round(df_adv['Red_Score'].mean(), 1)
+    total_pat  = int(df_adv['Blue_Patched'].sum())
+    total_inf  = int(df_adv['Red_Infected'].sum())
+    blue_wins  = int((df_adv['Blue_Score'] > df_adv['Red_Score']).sum())
+    red_wins   = int((df_adv['Red_Score']  > df_adv['Blue_Score']).sum())
+    dom_ratio  = round(total_pat / max(total_inf, 1), 1)
+
+    # Header banner
+    st.markdown(f"""
+    <div style='display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+    background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;
+    padding:20px 28px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.04)'>
+      <div style='text-align:center'>
+        <div style='font-size:0.65rem;font-family:JetBrains Mono;color:{C_BLUE_DARK};letter-spacing:0.12em;margin-bottom:6px'>BLUE TEAM — DEFENDERS</div>
+        <div style='font-family:JetBrains Mono;font-size:2.4rem;font-weight:700;color:{C_BLUE_DARK}'>{blue_avg}</div>
+        <div style='font-size:0.72rem;color:#94a3b8;margin-top:4px'>avg reward · {blue_wins} wins · {total_pat:,} nodes patched</div>
+      </div>
+      <div style='text-align:center;padding:0 32px'>
+        <div style='font-size:1.1rem;font-weight:700;color:#475569;font-family:JetBrains Mono'>VS</div>
+        <div style='font-size:0.68rem;color:#94a3b8;margin-top:4px'>1000 episodes</div>
+        <div style='margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;padding:4px 14px;font-size:0.72rem;font-family:JetBrains Mono;color:#065f46;font-weight:600'>
+          Blue dominates {dom_ratio}x
+        </div>
+      </div>
+      <div style='text-align:center'>
+        <div style='font-size:0.65rem;font-family:JetBrains Mono;color:{C_RED_MID};letter-spacing:0.12em;margin-bottom:6px'>RED TEAM — ATTACKERS</div>
+        <div style='font-family:JetBrains Mono;font-size:2.4rem;font-weight:700;color:{C_RED_MID}'>{red_avg}</div>
+        <div style='font-size:0.72rem;color:#94a3b8;margin-top:4px'>avg reward · {red_wins} wins · {total_inf:,} nodes infected</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Live Arena ──────────────────────────────────────────
+    col_graph, col_panel = st.columns([1.7, 1])
+
+    with col_graph:
+        st.markdown(f"""<div style='font-family:{MONO};font-size:0.68rem;color:{C_BLUE_DARK};
+        margin-bottom:12px;letter-spacing:0.1em'>LIVE ADVERSARIAL ARENA</div>""", unsafe_allow_html=True)
+
+        env_adv  = build_env()
+        G_adv    = env_adv.graph
+        pos_adv  = nx.spring_layout(G_adv, seed=42)
+        n_nodes  = 15
+
+        if 'adv_sim' not in st.session_state:
+            st.session_state.adv_sim = {
+                'risks':    list(env_adv.node_risks),
+                'b_scan':   0, 'b_patch': 0,
+                'r_spread': 14,'r_infect': 14,
+                'blue_score': 0, 'red_score': 0,
+                'step': 0,
+                'log': []
+            }
+
+        sim = st.session_state.adv_sim
+
+        # Node colors — contested = orange if both teams nearby
+        node_colors = []
+        for i, r in enumerate(sim['risks']):
+            if   r == 0: node_colors.append('#10b981')   # patched green
+            elif r == 1: node_colors.append('#3b82f6')   # low blue
+            elif r == 2: node_colors.append('#f59e0b')   # medium amber
+            else:        node_colors.append('#f43f5e')   # high red
+
+        node_sizes = [18 + len(list(G_adv.neighbors(n)))*4 for n in range(n_nodes)]
+
+        ex, ey = [], []
+        for u,v in G_adv.edges():
+            x0,y0=pos_adv[u]; x1,y1=pos_adv[v]
+            ex+=[x0,x1,None]; ey+=[y0,y1,None]
+
+        fig_adv = go.Figure()
+
+        # Edges
+        fig_adv.add_trace(go.Scatter(x=ex, y=ey, mode='lines',
+            line=dict(width=0.8, color='rgba(148,163,184,0.25)'),
+            hoverinfo='none', showlegend=False))
+
+        # Nodes
+        fig_adv.add_trace(go.Scatter(
+            x=[pos_adv[i][0] for i in range(n_nodes)],
+            y=[pos_adv[i][1] for i in range(n_nodes)],
+            mode='markers+text',
+            text=[str(i) for i in range(n_nodes)],
+            marker=dict(size=node_sizes, color=node_colors,
+                        line=dict(color='white', width=2)),
+            textfont=dict(size=9, family=MONO, color='white'),
+            name="Nodes",
+            hovertemplate=[
+                f"<b>Node {i}</b><br>Risk: {['safe','low','med','high'][int(sim['risks'][i])]}<br>Connections: {len(list(G_adv.neighbors(i)))}<extra></extra>"
+                for i in range(n_nodes)
+            ]
+        ))
+
+        # Blue agent rings
+        fig_adv.add_trace(go.Scatter(
+            x=[pos_adv[sim['b_scan']][0]], y=[pos_adv[sim['b_scan']][1]],
+            mode='markers', name='Scanner (Blue)',
+            marker=dict(size=node_sizes[sim['b_scan']]+20, symbol="circle-open",
+                        line=dict(color=C_BLUE_DARK, width=2.5)),
+            hoverinfo='skip'))
+        fig_adv.add_trace(go.Scatter(
+            x=[pos_adv[sim['b_patch']][0]], y=[pos_adv[sim['b_patch']][1]],
+            mode='markers', name='Patcher (Blue)',
+            marker=dict(size=node_sizes[sim['b_patch']]+30, symbol="circle-open",
+                        line=dict(color='#10b981', width=2.5)),
+            hoverinfo='skip'))
+
+        # Red agent rings
+        fig_adv.add_trace(go.Scatter(
+            x=[pos_adv[sim['r_spread']][0]], y=[pos_adv[sim['r_spread']][1]],
+            mode='markers', name='Spreader (Red)',
+            marker=dict(size=node_sizes[sim['r_spread']]+40, symbol="circle-open",
+                        line=dict(color=C_RED_LIGHT, width=2.5)),
+            hoverinfo='skip'))
+        fig_adv.add_trace(go.Scatter(
+            x=[pos_adv[sim['r_infect']][0]], y=[pos_adv[sim['r_infect']][1]],
+            mode='markers', name='Infector (Red)',
+            marker=dict(size=node_sizes[sim['r_infect']]+52, symbol="circle-open",
+                        line=dict(color=C_RED_DARK, width=3)),
+            hoverinfo='skip'))
+
+        fig_adv.update_layout(
+            plot_bgcolor=SURF, paper_bgcolor=SURF, height=440,
+            margin=dict(l=10, r=10, t=10, b=10),
+            showlegend=True,
+            legend=dict(bgcolor="rgba(255,255,255,0.95)", bordercolor=GRID, borderwidth=1,
+                        font=dict(size=11, color=TXT2), x=0.01, y=0.99,
+                        itemsizing='constant'),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            hoverlabel=dict(bgcolor=SURF, bordercolor=GRID, font=dict(color="#1e293b")))
+        st.plotly_chart(fig_adv, use_container_width=True)
+
+        # Node color legend
+        st.markdown(f"""
+        <div style='display:flex;gap:16px;flex-wrap:wrap;margin-top:4px'>
+          <span style='font-size:0.72rem;color:#475569;display:flex;align-items:center;gap:6px'>
+            <span style='width:10px;height:10px;border-radius:50%;background:#10b981;display:inline-block'></span>Patched / safe</span>
+          <span style='font-size:0.72rem;color:#475569;display:flex;align-items:center;gap:6px'>
+            <span style='width:10px;height:10px;border-radius:50%;background:#3b82f6;display:inline-block'></span>Low risk</span>
+          <span style='font-size:0.72rem;color:#475569;display:flex;align-items:center;gap:6px'>
+            <span style='width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block'></span>Medium risk</span>
+          <span style='font-size:0.72rem;color:#475569;display:flex;align-items:center;gap:6px'>
+            <span style='width:10px;height:10px;border-radius:50%;background:#f43f5e;display:inline-block'></span>High risk / infected</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_panel:
+        # Live score tracker
+        st.markdown(f"""
+        <div style='background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;
+        padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.04)'>
+          <div style='font-size:0.65rem;font-family:JetBrains Mono;color:#94a3b8;
+          letter-spacing:0.1em;margin-bottom:12px'>LIVE SESSION SCORE</div>
+          <div style='display:grid;grid-template-columns:1fr 1fr;gap:12px'>
+            <div style='text-align:center;background:#f0f9ff;border-radius:8px;padding:12px'>
+              <div style='font-size:0.65rem;color:{C_BLUE_DARK};font-family:JetBrains Mono;margin-bottom:4px'>BLUE</div>
+              <div style='font-family:JetBrains Mono;font-size:1.8rem;font-weight:700;color:{C_BLUE_DARK}'>{sim['blue_score']}</div>
+            </div>
+            <div style='text-align:center;background:#fff1f2;border-radius:8px;padding:12px'>
+              <div style='font-size:0.65rem;color:{C_RED_MID};font-family:JetBrains Mono;margin-bottom:4px'>RED</div>
+              <div style='font-family:JetBrains Mono;font-size:1.8rem;font-weight:700;color:{C_RED_MID}'>{sim['red_score']}</div>
+            </div>
+          </div>
+          <div style='margin-top:10px;font-size:0.68rem;color:#94a3b8;font-family:JetBrains Mono;text-align:center'>
+            Step {sim['step']}
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Controls
+        st.markdown(f"""<div style='font-family:{MONO};font-size:0.68rem;color:{C_BLUE_DARK};
+        letter-spacing:0.1em;margin-bottom:10px'>ARENA CONTROLS</div>""", unsafe_allow_html=True)
+
+        if st.button("▶  NEXT SIM STEP", key="adv_step", use_container_width=True):
+            # Blue moves
+            nb_bs = list(G_adv.neighbors(sim['b_scan']))
+            nb_bp = list(G_adv.neighbors(sim['b_patch']))
+            if nb_bs: sim['b_scan']  = max(nb_bs, key=lambda n: sim['risks'][n])
+            if nb_bp: sim['b_patch'] = max(nb_bp, key=lambda n: sim['risks'][n])
+
+            # Blue patches
+            if sim['risks'][sim['b_patch']] > 0:
+                old_risk = sim['risks'][sim['b_patch']]
+                sim['risks'][sim['b_patch']] = 0
+                pts = {1:1, 2:5, 3:10}[old_risk]
+                sim['blue_score'] += pts
+                sim['log'].append(('blue', f"Patched node {sim['b_patch']} (+{pts}pts)"))
+
+            # Red moves — go toward high risk nodes
+            nb_rs = list(G_adv.neighbors(sim['r_spread']))
+            nb_ri = list(G_adv.neighbors(sim['r_infect']))
+            if nb_rs: sim['r_spread'] = max(nb_rs, key=lambda n: sim['risks'][n])
+            if nb_ri: sim['r_infect'] = max(nb_ri, key=lambda n: sim['risks'][n])
+
+            # Red infects
+            if sim['risks'][sim['r_infect']] < 3:
+                sim['risks'][sim['r_infect']] += 1
+                pts = {1:1, 2:5, 3:10}.get(sim['risks'][sim['r_infect']], 1)
+                sim['red_score'] += pts
+                sim['log'].append(('red', f"Infected node {sim['r_infect']} (+{pts}pts)"))
+
+            # Natural spread
+            for node in range(n_nodes):
+                if sim['risks'][node] >= 2:
+                    for nb in G_adv.neighbors(node):
+                        if sim['risks'][nb] < sim['risks'][node] and random.random() < 0.15:
+                            sim['risks'][nb] = min(int(sim['risks'][nb])+1, 3)
+
+            sim['step'] += 1
+            st.rerun()
+
+        if st.button("↺  RESET ARENA", key="adv_reset", use_container_width=True):
+            del st.session_state.adv_sim
+            st.rerun()
+
+        # Event log — styled blue vs red
+        st.markdown(f"""<div style='font-family:{MONO};font-size:0.68rem;color:#94a3b8;
+        letter-spacing:0.1em;margin:14px 0 8px'>EVENT LOG</div>""", unsafe_allow_html=True)
+
+        log_html = ""
+        for team, msg in reversed(sim['log'][-10:]):
+            if team == 'blue':
+                log_html += f"""<div style='display:flex;align-items:center;gap:8px;
+                padding:6px 10px;border-bottom:1px solid #f1f5f9;font-size:0.72rem'>
+                <span style='width:8px;height:8px;border-radius:50%;background:{C_BLUE_DARK};flex-shrink:0'></span>
+                <span style='font-family:JetBrains Mono;color:{C_BLUE_DARK}'>{msg}</span></div>"""
+            else:
+                log_html += f"""<div style='display:flex;align-items:center;gap:8px;
+                padding:6px 10px;border-bottom:1px solid #f1f5f9;font-size:0.72rem'>
+                <span style='width:8px;height:8px;border-radius:50%;background:{C_RED_MID};flex-shrink:0'></span>
+                <span style='font-family:JetBrains Mono;color:{C_RED_MID}'>{msg}</span></div>"""
+
+        if not log_html:
+            log_html = f"<div style='padding:10px;font-size:0.72rem;color:#94a3b8;font-family:JetBrains Mono'>Click Next Sim Step to begin...</div>"
+
+        st.markdown(f"""<div style='background:#ffffff;border:1px solid #e2e8f0;
+        border-radius:10px;overflow:hidden;max-height:260px;overflow-y:auto'>{log_html}</div>""",
+        unsafe_allow_html=True)
+
+    st.divider()
+
+    # ── Bottom charts ───────────────────────────────────────
+    ca1, ca2 = st.columns(2)
+    with ca1:
+        fig_traj = go.Figure()
+        fig_traj.add_trace(go.Scatter(x=df_adv['Episode'],y=smooth(df_adv['Blue_Score'],40),
+            name="Blue Team", fill='tozeroy', fillcolor='rgba(14,165,233,0.07)',
+            line=dict(color=C_BLUE_DARK, width=1.5)))
+        fig_traj.add_trace(go.Scatter(x=df_adv['Episode'],y=smooth(df_adv['Red_Score'],40),
+            name="Red Team", fill='tozeroy', fillcolor='rgba(244,63,94,0.07)',
+            line=dict(color=C_RED_MID, width=1.5)))
+        dl(fig_traj, h=280, title="Adversarial training curves — blue vs red (smoothed)")
+        st.plotly_chart(fig_traj, use_container_width=True)
+
+    with ca2:
+        df_adv['Gap'] = df_adv['Blue_Score'] - df_adv['Red_Score']
+        fig_gap = go.Figure(go.Scatter(x=df_adv['Episode'],y=smooth(df_adv['Gap'],40),
+            name="Blue advantage", fill='tozeroy', fillcolor='rgba(16,185,129,0.08)',
+            line=dict(color=C_GRN, width=1.5),
+            hovertemplate="Ep %{x}<br>Blue edge: +%{y:.1f}<extra></extra>"))
+        fig_gap.add_hline(y=0, line_dash="dash", line_color="#cbd5e1", line_width=1)
+        dl(fig_gap, h=280, title="Blue team advantage over red (smoothed)")
+        fig_gap.update_layout(yaxis_title="Score gap", showlegend=False)
+        st.plotly_chart(fig_gap, use_container_width=True)
