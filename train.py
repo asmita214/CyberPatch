@@ -119,7 +119,9 @@ def train():
             'Episode':      episode,
             'RL_Team':      rl_reward,
             'Random_Agent': random_reward,
-            'Greedy_Agent': greedy_reward
+            'Greedy_Agent': greedy_reward,
+            'Q_States':     len(brain.q_table)
+            
         })
 
         if episode % 200 == 0:

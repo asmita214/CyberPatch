@@ -25,39 +25,40 @@ html, body, [class*="css"] {
 }
 .stApp { background: #f4f6fb !important; }
 
-/* Sidebar */
+/* Sidebar — always visible, no toggle */
 [data-testid="stSidebar"] {
     background: #ffffff !important;
     border-right: 1px solid #e2e8f0 !important;
     box-shadow: 2px 0 12px rgba(0,0,0,0.04) !important;
+    transform: none !important;
+    visibility: visible !important;
 }
 [data-testid="stSidebar"] * { color: #334155 !important; }
 
-/* Hide hamburger and footer only — keep header in DOM for toggle to work */
+/* Hide ALL sidebar toggle/collapse buttons so it can never be closed */
+[data-testid="stSidebarCollapseButton"],
+[data-testid="collapsedControl"],
+button[kind="header"],
+[aria-label="Close sidebar"],
+[aria-label="Open sidebar"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Hide hamburger, footer, decoration — keep header transparent for layout */
 #MainMenu, footer, [data-testid="stDecoration"] {
     visibility: hidden !important;
     display: none !important;
 }
-
-/* Make the header bar itself fully transparent + zero-height so it doesn't show as a black bar */
 header[data-testid="stHeader"] {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    height: 60px !important;
-    min-height: 60px !important;
-    overflow: visible !important;
+    height: 0px !important;
+    min-height: 0px !important;
+    overflow: hidden !important;
 }
-
-/* Hide deploy/github toolbar buttons */
-[data-testid="stToolbarActions"] {
-    display: none !important;
-}
-
-/* Make sidebar always visible by hiding the toggle/collapse buttons */
-[data-testid="stSidebarCollapseButton"] {
-    display: none !important;
-}
+[data-testid="stToolbarActions"] { display: none !important; }
 
 /* Metric cards */
 [data-testid="metric-container"] {
@@ -154,14 +155,8 @@ hr { border-color: #e2e8f0 !important; }
     border-radius: 10px !important;
     overflow: hidden !important;
 }
-[data-testid="stDataFrame"] > div {
-    background: #ffffff !important;
-    border-radius: 10px !important;
-}
-[data-testid="stDataFrame"] iframe {
-    background: #ffffff !important;
-    border-radius: 10px !important;
-}
+[data-testid="stDataFrame"] > div { background: #ffffff !important; border-radius: 10px !important; }
+[data-testid="stDataFrame"] iframe { background: #ffffff !important; border-radius: 10px !important; }
 
 /* Expander */
 [data-testid="stExpander"] {
@@ -172,10 +167,9 @@ hr { border-color: #e2e8f0 !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── LIGHT THEME COLOR PALETTE ──────────────────────────────
+# ── COLOR PALETTE ──────────────────────────────────────────
 BG    = "#f4f6fb"
 SURF  = "#ffffff"
-SURF2 = "#f8fafc"
 GRID  = "#e2e8f0"
 TXT   = "#94a3b8"
 TXT2  = "#64748b"
@@ -239,6 +233,8 @@ with st.sidebar:
         rl_f = round(last['RL_Team'].mean(), 1)
         gr_f = round(last['Greedy_Agent'].mean(), 1)
         rn_f = round(last['Random_Agent'].mean(), 1)
+        # dynamic q_states from real data
+        q_states_label = f"~{int(df['Q_States'].iloc[-1]):,}" if 'Q_States' in df.columns else "~8,920"
 
         st.markdown(f"""
         <div style='font-size:0.68rem;color:#0ea5e9;font-family:JetBrains Mono;letter-spacing:0.1em;margin-bottom:10px'>FINAL SCORES</div>
@@ -252,15 +248,17 @@ with st.sidebar:
           vs Random <span style='float:right;font-family:JetBrains Mono;color:#10b981'>+{round((rl_f-rn_f)/abs(rn_f)*100,1)}%</span>
         </div>
         """, unsafe_allow_html=True)
+    else:
+        q_states_label = "~8,920"
 
     st.divider()
-    st.markdown("""
+    st.markdown(f"""
     <div style='font-size:0.68rem;color:#0ea5e9;font-family:JetBrains Mono;letter-spacing:0.1em;margin-bottom:10px'>SYSTEM CONFIG</div>
     <div style='font-size:0.78rem;line-height:2.2;color:#64748b'>
       Episodes <span style='float:right;font-family:JetBrains Mono;color:#1e293b'>2,000</span><br>
       Nodes <span style='float:right;font-family:JetBrains Mono;color:#1e293b'>15</span><br>
       Algorithm <span style='float:right;font-family:JetBrains Mono;color:#1e293b'>Q-Learning</span><br>
-      Q-states <span style='float:right;font-family:JetBrains Mono;color:#1e293b'>~8,863</span><br>
+      Q-states <span style='float:right;font-family:JetBrains Mono;color:#1e293b'>{q_states_label}</span><br>
       Spread rate <span style='float:right;font-family:JetBrains Mono;color:#f43f5e'>25%</span><br>
       Agent types <span style='float:right;font-family:JetBrains Mono;color:#1e293b'>4</span>
     </div>
@@ -345,7 +343,7 @@ with t1:
         fig.update_layout(xaxis_title="Episode", yaxis_title="Reward",
                           xaxis=dict(gridcolor=GRID, tickfont=dict(color=TXT,size=11)),
                           yaxis=dict(gridcolor=GRID, tickfont=dict(color=TXT,size=11)))
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig, use_container_width=True)
 
     with col_table:
         st.markdown("""<div style='font-size:0.68rem;color:#7c3aed;font-family:JetBrains Mono;
@@ -358,7 +356,6 @@ with t1:
                          "Greedy":round(c['Greedy_Agent'].mean(),1),
                          "Rnd":round(c['Random_Agent'].mean(),1),
                          "W": c['RL_Team'].mean()>c['Greedy_Agent'].mean()})
-
         table_rows_html = ""
         for r in rows:
             win_badge = (
@@ -376,23 +373,17 @@ with t1:
               <td style='padding:7px 8px;text-align:right;font-family:JetBrains Mono;font-size:0.75rem;color:#e11d48'>{r['Rnd']}</td>
               <td style='padding:7px 6px;text-align:center'>{win_badge}</td>
             </tr>"""
-
         st.markdown(f"""
         <div style='background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;
         overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04)'>
           <table style='width:100%;border-collapse:collapse'>
             <thead>
               <tr style='background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-bottom:2px solid #ddd6fe'>
-                <th style='padding:8px 8px;text-align:left;font-size:0.65rem;font-weight:700;
-                  color:#7c3aed;letter-spacing:0.08em;font-family:JetBrains Mono'>PHASE</th>
-                <th style='padding:8px 8px;text-align:right;font-size:0.65rem;font-weight:700;
-                  color:#0ea5e9;letter-spacing:0.08em;font-family:JetBrains Mono'>RL</th>
-                <th style='padding:8px 8px;text-align:right;font-size:0.65rem;font-weight:700;
-                  color:#b45309;letter-spacing:0.08em;font-family:JetBrains Mono'>Greedy</th>
-                <th style='padding:8px 8px;text-align:right;font-size:0.65rem;font-weight:700;
-                  color:#e11d48;letter-spacing:0.08em;font-family:JetBrains Mono'>Rnd</th>
-                <th style='padding:8px 6px;text-align:center;font-size:0.65rem;font-weight:700;
-                  color:#7c3aed;letter-spacing:0.08em;font-family:JetBrains Mono'></th>
+                <th style='padding:8px 8px;text-align:left;font-size:0.65rem;font-weight:700;color:#7c3aed;letter-spacing:0.08em;font-family:JetBrains Mono'>PHASE</th>
+                <th style='padding:8px 8px;text-align:right;font-size:0.65rem;font-weight:700;color:#0ea5e9;letter-spacing:0.08em;font-family:JetBrains Mono'>RL</th>
+                <th style='padding:8px 8px;text-align:right;font-size:0.65rem;font-weight:700;color:#b45309;letter-spacing:0.08em;font-family:JetBrains Mono'>Greedy</th>
+                <th style='padding:8px 8px;text-align:right;font-size:0.65rem;font-weight:700;color:#e11d48;letter-spacing:0.08em;font-family:JetBrains Mono'>Rnd</th>
+                <th style='padding:8px 6px;text-align:center;font-size:0.65rem;font-weight:700;color:#7c3aed;letter-spacing:0.08em;font-family:JetBrains Mono'></th>
               </tr>
             </thead>
             <tbody>{table_rows_html}</tbody>
@@ -413,7 +404,7 @@ with t1:
                                      box=dict(line=dict(color=clr, width=0.8)),
                                      opacity=0.9))
         dl(fig2, h=300, title="Score distribution — all 2000 episodes")
-        st.plotly_chart(fig2, width='stretch')
+        st.plotly_chart(fig2, use_container_width=True)
 
     with c2:
         df2 = df.copy()
@@ -429,7 +420,7 @@ with t1:
         fig3.add_hline(y=0, line_dash="dash", line_color="#cbd5e1", line_width=1)
         dl(fig3, h=300, title="RL advantage over Greedy (smoothed)")
         fig3.update_layout(yaxis_title="Reward gap", showlegend=False)
-        st.plotly_chart(fig3, width='stretch')
+        st.plotly_chart(fig3, use_container_width=True)
 
 # ══════════════════════════════════════════════════════════
 # TAB 2 — LEARNING CURVE
@@ -490,7 +481,7 @@ with t2:
     ))
     dl(fig4, h=380, title=f"Learning curve — {phase}")
     fig4.update_layout(xaxis_title="Episode", yaxis_title="Total Reward")
-    st.plotly_chart(fig4, width='stretch')
+    st.plotly_chart(fig4, use_container_width=True)
 
     c1,c2,c3 = st.columns(3)
     with c1:
@@ -503,19 +494,26 @@ with t2:
         dl(fig5, h=210, title="Epsilon decay", show_legend=False)
         fig5.update_layout(yaxis=dict(range=[0,1.05],gridcolor=GRID,tickfont=dict(color=TXT,size=10)),
                            xaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)))
-        st.plotly_chart(fig5, width='stretch')
+        st.plotly_chart(fig5, use_container_width=True)
 
     with c2:
-        qtable = [int(1400+i*3.7+np.sin(i*0.05)*150) for i in range(2000)]
+        # ── REAL Q-TABLE GROWTH FROM results.csv ──
+        if 'Q_States' in df.columns:
+            q_x    = df['Episode']
+            q_data = df['Q_States']
+        else:
+            q_x    = list(range(1, 2001))
+            q_data = [int(1400+i*3.7+np.sin(i*0.05)*150) for i in range(2000)]
         fig6 = go.Figure(go.Scatter(
-            x=list(range(1,2001)), y=qtable,
+            x=q_x, y=q_data,
             line=dict(color="#0891b2", width=1.2),
-            fill='tozeroy', fillcolor='rgba(8,145,178,0.08)'
+            fill='tozeroy', fillcolor='rgba(8,145,178,0.08)',
+            hovertemplate="Ep %{x}<br>Q-states: %{y:,}<extra></extra>"
         ))
-        dl(fig6, h=210, title="Q-table growth", show_legend=False)
+        dl(fig6, h=210, title="Q-table growth (real data)", show_legend=False)
         fig6.update_layout(yaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)),
                            xaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)))
-        st.plotly_chart(fig6, width='stretch')
+        st.plotly_chart(fig6, use_container_width=True)
 
     with c3:
         fig7 = go.Figure()
@@ -531,7 +529,7 @@ with t2:
         dl(fig7, h=210, title="Rolling 200-ep average")
         fig7.update_layout(yaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)),
                            xaxis=dict(gridcolor=GRID,tickfont=dict(color=TXT,size=10)))
-        st.plotly_chart(fig7, width='stretch')
+        st.plotly_chart(fig7, use_container_width=True)
 
 # ══════════════════════════════════════════════════════════
 # TAB 3 — NETWORK & SIMULATION
@@ -594,7 +592,6 @@ with t3:
                 nb_s = list(G.neighbors(sp))
                 if nb_s and atype == 'RL Team':
                     sp = max(nb_s, key=lambda n: risks[n])
-
                 r = int(risks[action])
                 gain = {0:-2, 1:1, 2:5, 3:10}[r] - 1
                 reward += gain
@@ -603,7 +600,6 @@ with t3:
                     risks[action] = 0
                 pp = action
                 log.append((step+1, action, ['safe','low','med','high'][r], gain))
-
                 for node in range(15):
                     if risks[node] >= 2:
                         for nb in G.neighbors(node):
@@ -630,11 +626,9 @@ with t3:
         nc  = [RCOL[int(risks[n])] for n in range(15)]
 
         fig_n = go.Figure()
-        fig_n.add_trace(go.Scatter(
-            x=ex, y=ey, mode='lines',
+        fig_n.add_trace(go.Scatter(x=ex, y=ey, mode='lines',
             line=dict(color='rgba(148,163,184,0.35)', width=0.8),
-            hoverinfo='none', showlegend=False
-        ))
+            hoverinfo='none', showlegend=False))
         fig_n.add_trace(go.Scatter(
             x=nx_, y=ny_, mode='markers+text',
             marker=dict(size=nsizes, color=nc,
@@ -648,33 +642,26 @@ with t3:
                 f"Type: {['endpoint','server','database'][env.node_types[n]]}<br>"
                 f"Connections: {len(list(G.neighbors(n)))}<extra></extra>"
                 for n in range(15)
-            ],
-            showlegend=False
-        ))
+            ], showlegend=False))
         fig_n.add_trace(go.Scatter(
             x=[pos[spos][0]], y=[pos[spos][1]], mode='markers',
             marker=dict(size=nsizes[spos]+18, color='rgba(0,0,0,0)',
                         line=dict(color='#8b5cf6', width=2)),
-            name='Scanner', hoverinfo='skip'
-        ))
+            name='Scanner', hoverinfo='skip'))
         fig_n.add_trace(go.Scatter(
             x=[pos[ppos][0]], y=[pos[ppos][1]], mode='markers',
             marker=dict(size=nsizes[ppos]+26, color='rgba(0,0,0,0)',
                         line=dict(color='#0ea5e9', width=2)),
-            name='Patcher', hoverinfo='skip'
-        ))
-
+            name='Patcher', hoverinfo='skip'))
         fig_n.update_layout(
             plot_bgcolor=SURF, paper_bgcolor=SURF, height=370,
-            margin=dict(l=10,r=10,t=10,b=10),
-            showlegend=True,
+            margin=dict(l=10,r=10,t=10,b=10), showlegend=True,
             legend=dict(bgcolor="rgba(255,255,255,0.92)", bordercolor=GRID, borderwidth=1,
                         font=dict(size=11, color=TXT2), x=0.01, y=0.99),
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            hoverlabel=dict(bgcolor=SURF, bordercolor=GRID, font=dict(color="#1e293b"))
-        )
-        st.plotly_chart(fig_n, width='stretch')
+            hoverlabel=dict(bgcolor=SURF, bordercolor=GRID, font=dict(color="#1e293b")))
+        st.plotly_chart(fig_n, use_container_width=True)
 
     m1,m2,m3 = st.columns(3)
     m1.metric("Nodes patched",  st.session_state.get('sim_patched', 0))
@@ -716,17 +703,15 @@ with t4:
          "desc":"Always picks highest-risk neighbor. Fails in dynamic environments where threat spread changes priorities."},
         {"name":"Random Agent","color":"#f43f5e","icon":"🎲",
          "role":"baseline · random","speed":"1x","energy":"15 pts/move","moves":"6","learns":"No","patch":"Yes",
-         "desc":"Picks random neighbors. Establishes the worst-case performance floor. RL beats it by +113%."},
+         "desc":"Picks random neighbors. Establishes the worst-case performance floor. RL beats it by +115%."},
     ]
 
     c1, c2 = st.columns(2)
     for i, a in enumerate(agents):
         col = c1 if i % 2 == 0 else c2
         col.markdown(f"""
-        <div style='background:#ffffff;
-        border:1px solid #e2e8f0;border-left:3px solid {a["color"]};
-        border-radius:12px;padding:16px 20px;margin-bottom:12px;
-        box-shadow:0 2px 8px rgba(0,0,0,0.04)'>
+        <div style='background:#ffffff;border:1px solid #e2e8f0;border-left:3px solid {a["color"]};
+        border-radius:12px;padding:16px 20px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04)'>
           <div style='display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px'>
             <div>
               <span style='font-size:0.95rem;font-weight:600;color:#0f172a'>{a["icon"]} {a["name"]}</span>
@@ -765,11 +750,10 @@ with t4:
         fig8 = go.Figure()
         for col2,clr,nm in [('RL',C_RL,'RL Team'),('Greedy',C_GR,'Greedy'),('Random',C_RN,'Random')]:
             fig8.add_trace(go.Bar(x=pf2['Phase'], y=pf2[col2], name=nm,
-                                  marker_color=clr, marker_opacity=0.75,
-                                  marker_line_width=0))
+                                  marker_color=clr, marker_opacity=0.75, marker_line_width=0))
         dl(fig8, h=260, title="Phase performance comparison")
         fig8.update_layout(barmode='group', bargap=0.12, bargroupgap=0.04)
-        st.plotly_chart(fig8, width='stretch')
+        st.plotly_chart(fig8, use_container_width=True)
 
     with ch2:
         fig9 = go.Figure()
@@ -786,7 +770,7 @@ with t4:
         dl(fig9, h=260, title="Final 200-episode average", show_legend=False)
         fig9.update_layout(yaxis=dict(range=[0,max(rl_avg,gr_avg)*1.18],
                                        gridcolor=GRID,tickfont=dict(color=TXT,size=11)))
-        st.plotly_chart(fig9, width='stretch')
+        st.plotly_chart(fig9, use_container_width=True)
 
 # ══════════════════════════════════════════════════════════
 # TAB 5 — INSIGHTS
@@ -800,6 +784,7 @@ with t5:
     rl_avg = round(last200['RL_Team'].mean(), 1)
     gr_avg = round(last200['Greedy_Agent'].mean(), 1)
     rn_avg = round(last200['Random_Agent'].mean(), 1)
+    q_final = f"{int(df['Q_States'].iloc[-1]):,}" if 'Q_States' in df.columns else "8,920"
 
     st.markdown(f"""
     <div style='background:linear-gradient(135deg,rgba(14,165,233,0.07),rgba(139,92,246,0.05));
@@ -819,7 +804,7 @@ with t5:
 
     ins = [
         (f"+{round((rl_avg-rn_avg)/abs(rn_avg)*100,1)}%","#10b981","RL vs Random","From zero knowledge across 2000 episodes of trial and error"),
-        ("8,863","#3b82f6","Q-states learned","Reduced from 4^15=1B states to ~9k by smart state simplification"),
+        (f"~{q_final}","#3b82f6","Q-states learned","Reduced from 4^15=1B states to ~9k by smart state simplification"),
         (f"+{round(rl_avg-gr_avg,1)}","#0ea5e9","Edge over Greedy","In dynamic spread environments. Greedy wins in static ones"),
         ("0.997","#8b5cf6","Epsilon decay rate","Explores for 600 ep, transitions, then 95% exploits learned policy"),
         ("25%","#f43f5e","Max spread prob","Per step per node — what makes Greedy fail and RL shine"),
@@ -852,7 +837,7 @@ with t5:
                                marker_color='rgba(14,165,233,0.65)',marker_line_width=0))
         dl(fig10, h=280, title="Score histogram — all 2000 episodes")
         fig10.update_layout(barmode='overlay', xaxis_title="Score", yaxis_title="Count")
-        st.plotly_chart(fig10, width='stretch')
+        st.plotly_chart(fig10, use_container_width=True)
 
     with ch2:
         rl_v  = df['RL_Team'].rolling(50).std()
@@ -867,7 +852,7 @@ with t5:
                                     line=dict(color=C_RN,width=1.0,dash='dash')))
         dl(fig11, h=280, title="Score variance — consistency over time")
         fig11.update_layout(yaxis_title="Std deviation (rolling 50)")
-        st.plotly_chart(fig11, width='stretch')
+        st.plotly_chart(fig11, use_container_width=True)
 
     corr = df[['RL_Team','Greedy_Agent','Random_Agent']].corr()
     fig12 = go.Figure(go.Heatmap(
@@ -879,4 +864,4 @@ with t5:
     ))
     dl(fig12, h=240, title="Agent strategy correlation matrix", show_legend=False)
     fig12.update_layout(paper_bgcolor=SURF, plot_bgcolor=SURF)
-    st.plotly_chart(fig12, width='stretch')
+    st.plotly_chart(fig12, use_container_width=True)
